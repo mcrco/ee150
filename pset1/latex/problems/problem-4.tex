@@ -1,0 +1,125 @@
+\newpage{}
+\begin{problem}{Nonlinearities, loss functions, convergence \hfill [15 pts]}{prob:nonlin}
+
+\begin{enumerate}
+\item Show that $\tanh(x) + 1 = 2 \sigma (2x)$ where $\sigma$ is the sigmoid
+    function.\hfill (2 pts)
+\item Prove that function classes parametrized by both nonlinearities in (1) are
+    identical, which is to say any function representable by a neural network
+    with one activation function can be represented by a network with the other.
+    Consider the role of bias terms. \hfill (3 pts)
+\item Show that maximizing the log-likelihood function for a model where the
+    outputs represent conditional class probabilities is equivalent to
+    minimizing the cross-entropy loss. \hfill (5 pts)
+
+\item Provide a justification for using these particular bias correction factors
+    in Adam optimization. You may use words and/or derivations to support your
+    explanation.
+
+Recall from lecture III:
+\begin{align*}
+    \bar{s}_i^{t+1} & = \frac{s_i^{t+1}}{1-\beta_1}\\
+    \bar{r}_i^{t+1} & = \frac{r_i^{t+1}}{1-\beta_2}
+\end{align*} \hfill (5 pts)
+    
+
+\end{enumerate}
+\end{problem}
+
+\begin{solution*}{}
+
+\begin{enumerate}
+\item Show that $\tanh(x) + 1 = 2 \sigma (2x)$ where $\sigma$ is the sigmoid
+    function.\hfill (2 pts)
+
+\begin{proof}
+\begin{align*}
+    \tanh(x) + 1 &= \frac{e^{x} - e^{-x}}{e^{x} + e^{-x}} + 1 \\ 
+    &= \frac{e^{x} - e^{-x} + (e^{x} + e^{-x})}{e^{x} + e^{-x}} \\ 
+    &= \frac{2e^{x}}{e^{x} + e^{-x}} \\ 
+    &= 2 \cdot \frac{1}{1 + e^{-2x}} \\ 
+    &= 2\sigma(2x)
+.\end{align*}
+\end{proof}
+
+\item Prove that function classes parametrized by both nonlinearities in (1) are
+    identical, which is to say any function representable by a neural network
+    with one activation function can be represented by a network with the other.
+    Consider the role of bias terms. \hfill (3 pts)
+
+\begin{proof}
+Every activation layer is preceded and succeeded by a linear layer, which is 
+just a linear transformation. Scalar addition and multiplication applied to a 
+linear transformation is just another linear transformation/layer. Thus, to modify 
+a MLP with the $\tanh$ activation function to use $\sigma$ activation, for every 
+activation function, we scale the weights of the previous linear layer by 2 (which 
+is still a linear layer) and scale the weights of the next linear layer by 2 and
+subtract 1 (also still a linear layer) to form a new valid MLP that describes
+the same function, according to our proof from the previous function.
+\end{proof}
+
+\item Show that maximizing the log-likelihood function for a model where the
+    outputs represent conditional class probabilities is equivalent to
+    minimizing the cross-entropy loss. \hfill (5 pts)
+
+\begin{proof}
+Let $\overline{x}$ be the input, $\overline{y}$ be the ground truth, and
+$\hat{y}=f(\overline{x}, w)$ be the models' prediction, with $\hat{y}_{i}$
+representing the model's predicted probability that $\overline{x}$ belongs to
+class $i$. 
+
+Then, we can model each of the $\overline{y}_{i}$ as random variables with the
+Bernoulli distribution, which states that the probability of a $\overline{y}_{i}
+\in \{0,1\}$ being the true label given class probability $\overline{x}_{i}$ is
+$\hat{y}_{i}^{\overline{y}_{i}}(1-\hat{y}_{i})^{1-\overline{y}_{i}}$. 
+
+Then the likelihood that the true class probability distribution came from the
+predicted class probability distribution is the product of the probabilities of
+each individual class probability coming from the predicted class probability
+distribution:
+
+\[
+    \prod_{i=1}^{n}  \hat{y}_{i}^{\overline{y}_{i}} (1 - \hat{y}_{i})^{1 - \overline{y}_{i}}
+.\] 
+
+The log of this likelihood is
+
+\[
+\sum_{i=1}^{n} \left( \overline{y}_{i}\log \hat{y}_{i} + (1 - \overline{y}_{i})\log(1 - \hat{y}_{i}) \right)  
+.\] 
+
+Notice that for $\overline{y}_{i} = 1$ (class $i$ is the true label), only the
+$\log\hat{y}_{i}$ counts towards the summation, while for $\overline{y}_{i} = 0$ (class
+$i$ is not the true label), only $\log(1-\hat{y}_{i})$ counts towards the summation.
+Also notice that that $\log(1-\hat{y}_{i})$ is maximized when $\log(\hat{y}_{i})$ is 
+minimized. Thus, we are trying to maximize $\hat{y}_{i}$ if $i$ is the correct
+class and minimize $\sum_{j}^{}\hat{y}_{j}$ for all $j\neq i$ ($j$ is not the
+correct class). Now, notice that $\sum_{j}\hat{y}_{j}$ is minimized if $\hat{y}_{i}$ 
+is maximized since they are probabilities in the same distribution; thus, we
+only have to maximize $\hat{y}_{i}$, where $i$ is the ground truth class for
+input $\overline{x}$.
+
+Thus, our objective for maximizing log likelihood is the same as maximizing
+
+\[
+\sum_{\mathcal{D}}^{} \overline{y}^{T} \log \hat{y} = \sum_{\mathcal{D}}^{} \overline{y}^{T} \log f(\overline{x}, w)
+.\] 
+
+
+The formula for cross-entropy loss is
+
+\[
+-\frac{1}{K}\sum_{\mathcal{D}} \overline{y}^{T} \log f(\overline{x}, w)
+.\] 
+
+Notice that the formula for cross-entropy loss is a negative scalar multiple of
+the simplified objective formula for log likelihood. Thus, maximizing log likelihood is the same as
+minimizing cross-entropy loss.
+\end{proof}
+
+\item Someone told me this is extra credit so imma just skip it since I have another
+set due in 3 hours and I'm celebrating my birthday later today. I hope they were
+right.
+\end{enumerate}
+
+\end{solution*}

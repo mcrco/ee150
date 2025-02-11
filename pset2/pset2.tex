@@ -1,0 +1,315 @@
+\documentclass[answers]{exam}
+\makeindex
+
+\usepackage{amsmath, amsfonts, amssymb, amstext, amscd, amsthm, makeidx, graphicx, hyperref, url, enumerate}
+\newtheorem{theorem}{Theorem}
+\allowdisplaybreaks
+
+\begin{document}
+
+\begin{center}
+{\Large EE 150 - Problem Set 2} \\
+\medskip
+Marco Yang \\
+\medskip
+2237027
+\bigskip
+\end{center}
+
+\begin{questions}
+\question[10] Dropout
+
+\begin{parts}
+\part Show that OLS regression with dropout is equivalent to Ridge Regression by
+proving that the expected squared loss with dropout is of the following form:
+
+\[
+\mathbb{E}[\mathcal{L}(w)] = ||y - f(p)Xw||^2 + g(p)||\Gamma w||^2
+\] 
+
+where $f(p)$ and $g(p)$ are functions of $p$, and $\Gamma$ is a diagonal matrix
+with the standard deviations of features in data matrix $X$ (derived from Gram
+matrix $X^{T}X$). This result should provide some insight into how dropout
+performs a similar regularization role as an $\ell_2$ norm penalty on model
+parameters. More generally, this equivalence is approximately true for MLPs.
+
+\begin{solution}
+The square loss for OLS is
+
+\[
+\mathcal{L}(w) = ||y - Xw||^2
+.\] 
+
+Let $X$ be $n \times d$. Decomposing into into summations, we have
+
+\begin{align*}
+||y - Xw||^2 &= \sum_{i=1}^{n} (y_{i} - X_{i} w)^2 \\ 
+&= \sum_{i=1}^{n} \left(y_{i} - \sum_{j=1}^{d}(X_{ij} w_{j})\right)^2 \\ 
+&= \sum_{i=1}^{n} \left( y_{i}^2 - 2y_{i}\sum_{j=1}^{d}(X_{ij} w_{j}) + \left( \sum_{j=1}^{d} X_{ij}w_{j} \right)^2 \right)
+.\end{align*}
+
+In dropout, every $X_{ij}$ is multiplied by an independent random variable $P_{j}$ that is $0$
+with probability $p$ and $1$ with probability $1 - p$. Dropout also enforces
+that the expected value of the input stays the same, thus every $X_{ij}$ is scaled by
+$\frac{1}{1-p}$ since the expected value of $X_{ij}$ is $1-p$ times its original value. 
+Now, multiplying every $X_{ij}$ by $P_{j} \cdot \frac{1}{1-p}$ and computing the
+expected value of the loss,
+
+\begin{align*}
+\mathbb{E}(\mathcal{L}(w)) &= \mathbb{E} \left[ \sum_{i=1}^{n}\left( y_{i}^2 - 2y_{i}\sum_{j=1}^{d}\left(X_{ij} P_{j} \left( \frac{1}{1-p} \right) w_{j}\right) + \left( \sum_{j=1}^{d} X_{ij}P_{j} \left(\frac{1}{1-p}\right) w_{j} \right)^2 \right)   \right] \\
+&= \sum_{i=1}^{n} y_{i}^2 - 2\sum_{i=1}^{n}y_{i}\mathbb{E} \left[ \sum_{j=1}^{d}\left(X_{ij} P_{j} \left( \frac{1}{1-p} \right) w_{j}\right) \right] \\ 
+    & \quad + \sum_{i=1}^{n}\mathbb{E} \left[ \left( \sum_{j=1}^{d} X_{ij}P_{j} \left( \frac{1}{1-p} \right) w_{j} \right)^2 \right].
+\end{align*}
+
+Applying linearity of expectation to the second term and expanding the square in
+the third,
+
+\begin{align*}
+\mathbb{E}(\mathcal{L}(w))&= \sum_{i=1}^{n} y_{i}^2 - 2\sum_{i=1}^{n} y_{i}\sum_{j=1}^{d}(X_{ij} w_{j}) \\ 
+    & \quad +\sum_{i=1}^{n}\mathbb{E} \left[ \sum_{j=1}^{d} \left(X_{ij}P_{j} \left( \frac{1}{1-p} \right)  w_{j}\right)^2 + 2\sum_{j=1}^{d} \sum_{k=j + 1}^{d} X_{ij}X_{ik}w_{j}w_{k}P_{j}P_{k} \cdot \left( \frac{1}{1-p} \right)^2 \right] \\
+.\end{align*}
+
+Plugging in the probabilities and applying LoE again,
+
+\begin{align*}
+\mathbb{E}(\mathcal{L}(w))&= \sum_{i=1}^{n} y_{i}^2 - 2y_{i}\sum_{i=1}^{n} \sum_{j=1}^{d}(X_{ij} w_{j}) + \frac{1}{1-p}\sum_{i=1}^{n} \sum_{j=1}^{d} (X_{ij}w_{j})^2 \\ 
+    &\quad + 2\sum_{i=1}^{n}\sum_{j=1}^{d} \sum_{k=j + 1}^{d} X_{ij}X_{ik}w_{j}w_{k} \\ 
+&= \sum_{i=1}^{n} \left( y_{i}^2 - 2y_{i}\sum_{j=1}^{d}X_{ij}w_{j} + \left( \sum_{j=11}^{d}X_{ij}w_{j} \right)^2 \right) - \left( 1 - \frac{1}{1-p} \right) \sum_{i=1}^{n}\sum_{j=1}^{d} (X_{ij}w_{j})^2 \\
+&= ||y - Xw||^2 + \frac{p}{1-p} \sum_{i=1}^{n} \sum_{j=1}^{d} (X_{ij}w_{j})^2
+.\end{align*}
+
+Notice that $\sum_{i=1}^{n} \sum_{j=1}^{d} X_{ij}^2$ is actually the sum
+of the squared norms of each column in $X$, which is also the sum of the diagonals
+of $X^{T}X$. Then, multiplying each $X_{ij}^2$ by $w_{j}^2$ is the same as
+multiplying $\text{diag}\left( X^{T}X \right) w^2$. Since $\Gamma = 
+(X^{T}X)^{\frac{1}{2}}$,
+
+\[
+\mathbb{E}[\mathcal{L}(w)] = ||y - f(p)Xw||^2 + g(p)||\Gamma w||^2,
+\] 
+
+where $f(p) = I_{n}$ and $g(p) = \frac{p}{1-p}$.
+\end{solution}
+
+\part Use python to compute the expected error and the theoretical expected 
+error.
+
+\begin{solution}
+Done in colab.
+\end{solution}
+\end{parts}
+
+\question[10] Batchnorm
+
+\begin{parts}
+\part Given $\frac{\partial \mathcal{L}}{\partial Y}$, where $Y$ is the output
+of batchnorm, derive $\frac{\partial \mathcal{L}}{\partial \beta}, 
+\frac{\partial \mathcal{L}}{\partial \gamma}, 
+\frac{\partial \mathcal{L}}{\partial X}$.
+
+\begin{solution}
+\[
+Y_{ij} = \gamma_{j}\hat{X}_{ij} + \beta_{j} 
+\implies Y_{i} = \gamma^{T} \odot \hat{X}_{i} + \beta
+\implies \frac{\partial Y_{i}}{\partial \beta^{T}} = 1 
+\implies \frac{\partial \mathcal{L}}{\partial \beta} = 
+\sum_{i=1}^{N} \left( \frac{\partial \mathcal{L}}{\partial Y_{i}}  \right)^{T}
+\] 
+\[
+Y_{ij} = \gamma_{j}\hat{X}_{ij} + \beta_{j} 
+\implies Y_{i} = \gamma^{T} \odot \hat{X}_{i} + \beta
+\implies \frac{\partial Y_{i}}{\partial \gamma^{T}} = \hat{X}_{i}
+\implies \frac{\partial \mathcal{L}}{\partial \gamma} = 
+\sum_{i=1}^{N} \left( \frac{\partial \mathcal{L}}{\partial Y_{i}} \odot \hat{X}_{i} \right)^{T}
+\] 
+\[
+Y_{ij} = \gamma_{j}\hat{X}_{ij} + \beta_{j} 
+\implies Y_{i} = \gamma^{T} \odot X_{i} + \beta
+\implies \frac{\partial Y_{i}}{\partial \hat{X}_{i}} = \gamma^{T}
+\implies \frac{\partial \mathcal{L}}{\partial \hat{X}} = 
+\frac{\partial \mathcal{L}}{\partial Y} \odot \begin{bmatrix} 
+\gamma^{T} \\ 
+\vdots \\ 
+\gamma^{T}
+\end{bmatrix}
+\] 
+
+Now, we know that $\hat{X}_{ij} = (X_{ij} - \mu_{j}) / \sqrt{\sigma^2_{j} 
++ \epsilon}$. Since $\mu_{j},\sigma^2_{j}$ are both functions of $X_{ij}$,
+we need to apply quotient rule and chain rule:
+
+\[
+\frac{\partial \hat{X}_{ij}}{\partial X_{ij}} = 
+\frac{s_{j}(X_{ij}-\mu_{j})' - (X_{ij} - \mu_{j})s'_{j}}{s_{j}^2}
+.\] 
+
+Here, $s_{j}$ is $\sqrt{\sigma^2_{j} + \epsilon}$. Computing the gradients, 
+we have
+
+\begin{align*}
+\mu'_{j} &= \frac{1}{N} \\ 
+s'_{j} &= \frac{1}{2\sqrt{\sigma^2_{j}+\epsilon}} \cdot \frac{\partial}{\partial X_{ij}} (\sigma^2_{j} + \epsilon) \\ 
+&= \frac{1}{2s_{j}} \cdot \frac{\partial}{\partial X_{ij}} \cdot \frac{1}{N} \cdot \sum_{k=1}^{N} (X_{kj} - \mu_{j})^2 \\
+&= \frac{1}{2s_{j}} \cdot \frac{2}{N} \cdot \sum_{k=1}^{N} (X_{kj} - \mu_{j}) \cdot \frac{\partial}{\partial X_{ij}} (X_{kj}-\mu_{j}) \\
+&= \frac{1}{2s_{j}} \cdot \frac{2}{N} \cdot \left( X_{ij} - \mu_{j} + \sum_{k=1}^{N} (X_{kj} - \mu_{j}) \cdot \left( -\frac{1}{N} \right) \right) \\
+&= \frac{1}{Ns_{j}} \cdot \left( X_{ij} - \mu_{j}\right).
+\end{align*}
+
+In the above calculation for $s'_{j}$, the summation for $k=1,\ldots,N$ cancels
+out because the sums of the difference with a mean is 0. The extra 
+$X_{ij} - \mu_{j}$ term comes from the fact that when $k=i$, the partial
+derivative of $(X_{ij} - \mu_{j})$ w.r.t. $X_{ij}$ is $1 - \mu'_{j}$.
+
+Thus, for $\hat{X}_{ij}$, the derivative is 
+
+\begin{align*}
+\frac{\partial \hat{X}_{ij}}{\partial X_{ij}} &= 
+\frac{s_{j}(1 - \frac{1}{N}) - (X_{ij} - \mu_{j}) \cdot \frac{1}{Ns_{j}} (X_{ij} - \mu_{j})}{s_{j}^2} \\
+&= \frac{1}{s_{j}} - \frac{1 + \hat{X}_{ij}^2}{Ns_{j}}
+.\end{align*}
+
+However, we still have to account for the role $X_{ij}$ plays in $\hat{X}_{kj},
+k\neq i$ since $ X_{ij}$ is used in $\mu_{j}, s_{j}$ for those terms as well.
+
+\begin{align*}
+\frac{\partial \hat{X}_{kj}}{\partial X_{ij}} &= \frac{s_{j}(X_{kj}-\mu_{j})' - (X_{kj} - \mu_{j})s'_{j}}{s_{j}^2} \\ 
+&= \frac{s_{j}\left( -\frac{1}{N} \right) - (X_{kj}-\mu_{j}) \cdot \frac{1}{Ns_{j}}(X_{ij}-\mu_{j})}{s_{j}^2} \\
+&= -\frac{1 + \hat{X}_{kj}\hat{X}_{ij}}{Ns_{j}}
+.\end{align*}
+
+Combining the derivatives from $\hat{X}_{kj}$ and $\hat{X}_{ij}$ with the values
+of $\frac{\partial \mathcal{L}}{\partial \hat{X}_{ij}}$,
+
+\[
+\frac{\partial \mathcal{L}}{\partial X_{ij}} = 
+\frac{1}{s_{j}} \cdot \frac{\partial \mathcal{L}}{\partial \hat{X}_{ij}} 
+- \frac{1}{Ns_{j}} \sum_{k=1}^{N} \frac{\partial \mathcal{L}}{\partial \hat{X}_{kj}} 
+-  \frac{\hat{X}_{ij}\sum_{k=1}^{N}\hat{X}_{kj} \cdot \frac{\partial \mathcal{L}}{\partial \hat{X}_{kj}}}{Ns_{j}}
+.\] 
+
+Not sure if the TA reading this is looking for the OG Batchnorm paper
+derivation, so here's the comparision: essentially, in the sum above, the first
+term is the derivative that comes from the contribution of $X_{ij}$ to every
+$\hat{X}_{ij}$, the second term is from the contribution of $X_{ij}$ to every
+time the mean is used to compute an element in column $j$ for $\hat{X}$, and the
+last term is the contribution of $X_{ij}$ to every time the variance is used to
+compute an element in column $j$ in $\hat{X}$.  
+
+To put this into matrix form (as a product of a Jacobian of sorts with the
+matrix of $\frac{\partial L}{\partial \hat{X}}$, which we will now denote $D$),
+notice that the matrix corresponding to the first term is $\frac{1}{s_{j}} \odot
+(ID)$, where $I$ is the identity matrix, the second term can be written as
+$-\frac{1}{Ns_{j}}\odot (\textbf{1}D)$, where $\textbf{1}$ is the matrix of
+all ones, and the last term corresponds to $\frac{1}{Ns_{j}} \odot\hat{X} \odot
+\left( \textbf{1} \cdot (\hat{X} \odot D)\right)$. Thus, our gradient for the
+input is
+
+\[
+\frac{\partial \mathcal{L}}{\partial X} = 
+\frac{1}{s_{j}} \odot (I \frac{\partial \mathcal{L}}{\partial Y} \odot [\gamma^{T}] ) 
+- \frac{1}{Ns_{j}}\odot(\textbf{1} \frac{\partial \mathcal{L}}{\partial Y} \odot [\gamma^{T}]) 
+- \frac{1}{Ns_{j}} \odot \hat{X} \odot \left( \textbf{1} (\hat{X}\odot \frac{\partial \mathcal{L}}{\partial Y} \odot [\gamma^{T}]) \right) 
+.\] 
+
+In the equation above, $[\gamma^{T}]$ is the $N \times D$ matrix with its rows being
+$\gamma^{T}$.
+\end{solution}
+
+\part Implement batchnorm and compare with Pytorch's.
+
+\begin{solution}
+Code: \href{https://colab.research.google.com/drive/1fvWNh_8h5VLk5Xgeo1WXGn6VHQGhb66g?usp=sharing}{colab link}
+
+Holy shit it actually works I didn't think my formula was right since it was
+different from the batchnorm paper's.
+\end{solution}
+\end{parts}
+
+\question[15] Layernorm
+
+In Layernorm,
+
+\[
+Y_{ij} = \text{LN}_{\gamma,\beta}(X_{ij}) = \gamma_{j}\hat{X}_{ij} + \beta_{j}
+,\] 
+
+where
+
+\begin{gather*}
+\mu_{i} = \frac{1}{D} \sum_{j=1}^{D}X_{ij} \\ 
+\sigma_{i}^2 = \frac{1}{D} \sum_{j=1}^{D} (X_{ij}-\mu_{i})^2 \\
+\hat{X}_{ij} = \frac{X_{ij} - \mu_{i}}{\sqrt{\sigma_{i}^2+\epsilon}}
+\end{gather*}
+
+Given $\frac{\partial \mathcal{L}}{\partial Y}$, derive 
+$\frac{\partial \mathcal{L}}{\partial \beta},
+\frac{\partial \mathcal{L}}{\partial \gamma}, 
+\frac{\partial \mathcal{L}}{\partial X}$.
+
+\begin{parts}
+\part Backprop Derivation
+
+\begin{solution}
+There's no change for $\beta$ and $\gamma$ since the dimensions for those are
+still the same. 
+
+\[
+Y_{ij} = \gamma_{j}\hat{X}_{ij} + \beta_{j} 
+\implies Y_{i} = \gamma^{T} \odot \hat{X}_{i} + \beta
+\implies \frac{\partial Y_{i}}{\partial \beta^{T}} = 1 
+\implies \frac{\partial \mathcal{L}}{\partial \beta} = 
+\sum_{i=1}^{N} \left( \frac{\partial \mathcal{L}}{\partial Y_{i}}  \right)^{T}
+\] 
+\[
+Y_{ij} = \gamma_{j}\hat{X}_{ij} + \beta_{j} 
+\implies Y_{i} = \gamma^{T} \odot \hat{X}_{i} + \beta
+\implies \frac{\partial Y_{i}}{\partial \gamma^{T}} = \hat{X}_{i}
+\implies \frac{\partial \mathcal{L}}{\partial \gamma} = 
+\sum_{i=1}^{N} \left( \frac{\partial \mathcal{L}}{\partial Y_{i}} \odot \hat{X}_{i} \right)^{T}
+\] 
+\[
+Y_{ij} = \gamma_{j}\hat{X}_{ij} + \beta_{j} 
+\implies Y_{i} = \gamma^{T} \odot X_{i} + \beta
+\implies \frac{\partial Y_{i}}{\partial \hat{X}_{i}} = \gamma^{T}
+\implies \frac{\partial \mathcal{L}}{\partial \hat{X}} = 
+\frac{\partial \mathcal{L}}{\partial Y} \odot \begin{bmatrix} 
+\gamma^{T} \\ 
+\vdots \\ 
+\gamma^{T}
+\end{bmatrix}
+\] 
+
+As for $X$, since it's pretty much just the transposed version of batchnorm, if
+we switch our dimension for $\mu, \sigma^2$ to the batch dimension and sum from
+$j=1\ldots D$, we should have the correct formulas for layernorm backprop.
+Notice that we also commute any matrix multiplications since we want it over the
+$D$ dimension this time, not the $N$ dimension.
+
+\[
+\frac{\partial \mathcal{L}}{\partial X} = 
+\frac{1}{s_{i}} \odot (\frac{\partial \mathcal{L}}{\partial Y}I \odot [\gamma^{T}] ) 
+- \frac{1}{Ns_{i}}\odot(\frac{\partial \mathcal{L}}{\partial Y} \textbf{1} \odot [\gamma^{T}]) 
+- \frac{1}{Ns_{i}} \odot \hat{X} \odot \left( (\hat{X}\odot \frac{\partial \mathcal{L}}{\partial Y} \odot [\gamma^{T}]) \textbf{1} \right) 
+.\] 
+\end{solution}
+
+\part Code
+
+\begin{solution}
+    \href{https://colab.research.google.com/drive/1iVcwAy4x0Yi_5Zprh3HvZzJjjhYhr73C?usp=sharing}{colab link}
+\end{solution}
+
+\part Puzzle: Based on the batchnorm of a $16 \times 16$ symmetric matrix with
+affine transformation $\gamma=1, \beta=0$, given the layernorm of the matrix
+with the same affine transformation, how many elements of the batchnorm output
+do you know?
+
+\begin{solution}
+All of them. If the matrix is symmetric, then the mean and variance across the
+batch and feature dimensions are the same. Thus, layernorm, which is analagous
+to doing batchnorm on the transpose of a matrix, is the same.
+\end{solution}
+\end{parts}
+\end{questions}
+
+\end{document}

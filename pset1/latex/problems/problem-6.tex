@@ -1,0 +1,92 @@
+\newpage{}
+\begin{problem}{Representation power \hfill[20 pts]}{prob:rep_power}
+
+\begin{enumerate}
+\item Show that adding layers to a neural network without non-linear activation functions does not increase its expressive power. \hfill (4 pts)
+\item Give an example where adding layers to a deep network without non-linearities could reduce the expressive capacity of the network. \hfill (3 pts)
+\item Design a one-layer perceptron that fits the logical functions \texttt{AND} and \texttt{OR} for 2D inputs. Why can't a single layer fit \texttt{XOR}? \hfill (5 pts)
+
+\item Show that a neural network with a one-dimensional input $x$ and one-dimensional output $y$, with ReLU activations of depth $D$ and widths $W_d$, $d=1,\dots,D$ can represent piecewise linear functions $f$ with at most $2^D \prod_{d=1}^{D} W_d$ linear pieces.
+
+Essentially, if we define $\kappa(f)$ as the smallest number of linear pieces in $f$, show
+\[
+\kappa(y) \le 2^D \prod_{d=1}^{D} W_d
+\]
+
+Here are some hints.
+    \begin{enumerate}[a.]
+        \item We can always represent a piecewise linear function with $N$ pieces as a one-layer network with width $N$ (case $D=1$)
+        \item Proceed by induction, keeping in mind that
+        \begin{enumerate}[i.]
+            \item The property is invariant to scale (the number of linear pieces of $f$, $\ell_f$ needs remains the same regardless of scaling $f$)
+            \item The number of linear pieces in the sum of two functions is at most the sum of the number of linear pieces in each individual function.
+            \item Applying a ReLU to a function at most doubles the number of linear pieces needed
+        \end{enumerate}
+    \end{enumerate}
+
+\end{enumerate} 
+
+It might help you to draw out piecewise functions for problem 4. \hfill (8 pts)
+\end{problem}
+
+\begin{solution*}{}{}
+\begin{enumerate}
+\item \begin{proof}
+Every layer in a neural net is a linear map. Thus, if there are no activation
+functions, the network is a composition of linear maps, which we know is another
+linear map, which is not an increase in expressive power.
+\end{proof}
+
+\item Say you have an input layer of size $d > 1$ and an initial final layer of
+size $d$. If you add an intermediate layer of size $1$, you reduce the
+expressive capacity since you go from a higher dimensional space to a latent
+space between the first and second layers, and then go from a latent space to a
+space that has the same dimensions as the initial space, which we know can no
+longer be spanned by the inputs of the previous layer. 
+
+More formally, let our target function be a linear map $f:\mathbb{R}^{d} \to
+\mathbb{R}^{d}$. A single layer neural network without activation can
+theoretically learn this since the network itself is a linear map
+$g:\mathbb{R}^{d} \to \mathbb{R}^{d}$. However, if we introduce an intermediate
+layer with dimension $c < d$, then we first go from $\mathbb{R}^{d}\to
+\mathbb{R}^{c}$, and then go from $\mathbb{R}^{c}\to \mathbb{R}^{d}$ for the
+output. However, $\mathbb{R}^{c}$ doesn't span $\mathbb{R}^{d}$, so the output
+cannot span $\mathbb{R}^{d}$ either.
+
+\item A perceptron with the weights $(1, 1)$ and bias $-1.5$ could simulate AND,
+    and a perceptron with weights $(1, 1)$ and activation threshold $-0.5$ could
+    simulate OR, where negative output means false and positive means true. We
+    can't simulate XOR with a singe layer since a single layer is a line, and
+    XOR is not linearly separable (can't be separated by a single line).
+
+\item \begin{proof}
+Each neuron with a ReLU activation is able to split each of its inputs into a
+piecewise linear function consisting of two parts: if $x_{i}$ is the input value
+and $w_{i}, b_{i}$ are the weight and bias corresponding to that input for the
+neuron, the ReLU activation creates a flat line for $w_{i}x_{i} + b_{i} < 0$ and 
+another line of slope 1 for $w_{i}x_{i}+b_{i} \ge 0$. 
+
+Now, consider every single path that can be taken from an input value through
+the network. There are $W_{1}$ neurons to choose from in the first layer, $W_2$
+neurons to choose from in the second layer, and so on for each of the $D$
+layers. And at each of the $D$ steps/neurons in the path, the ReLU activation
+function can double the number of linear pieces within the function
+corresponding to the path that's been taken. We know that the number of linear
+pieces in the sum of two functions is at most the sum of the number of linear
+pieces in each individual function, since this happens when none of the
+intervals for each piece in either function share an endpoint with an interval
+for a piece in the other function. Thus, the the maximum number of pieces of the
+neural network is the sum of the number of linear pieces created by all the
+functions corresponding to the paths that could have been taken from the input
+to the end of the network, which is
+
+\[
+2^{D}\prod_{d=1}^{D} W_{d} 
+\] 
+
+since at each of the $D$ steps, we can create 2 new pieces, and the are
+$\prod_{d=1}^{D} W_{d}$ neurons to choose from at each layer/step when going
+forward through the network.
+\end{proof}
+\end{enumerate}
+\end{solution*}
