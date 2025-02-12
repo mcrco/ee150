@@ -95,11 +95,11 @@ class CBOW(nn.Module):
     def forward(self, x):
         return self.softmax(self.fc(self.embed(x) / (2 * self.context_size)))
 
-    def embed(self, word):
+    def get_embedding(self, word):
         return self.embed(self.encoder(word))
 
     def find_similar(self, word, k):
-        scores = self.embed(word) @ self.W.T
+        scores = self.get_embedding(word) @ self.W.T
         sorted_idx = [(i, scores[i]) for i in torch.argsort(scores, descending=True)]
         best = [self.encoder.decode(sorted_idx[i]) for i in range(k)]
         return best
