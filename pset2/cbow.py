@@ -46,7 +46,7 @@ class OneHotEncoder:
         return self.encode(word)
 
 
-class CBOWDataset(Dataset):
+class ShakespeareDataset(Dataset):
     def __init__(self, text, encoder, context_size):
         self.text = text
         self.encoder = encoder
@@ -88,15 +88,15 @@ class CBOW(nn.Module):
         self.embed_dim = embedding_dim
         self.context_size = context_size
         self.encoder = encoder
-        self.W = nn.Linear(vocab_size, embedding_dim, bias=False)
-        self.V = nn.Linear(embedding_dim, vocab_size, bias=False)
+        self.embed = nn.Linear(vocab_size, embedding_dim, bias=False)
+        self.fc = nn.Linear(embedding_dim, vocab_size, bias=False)
         self.softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, x):
-        return self.softmax(self.V(self.W(x) / self.context_size))
+        return self.softmax(self.fc(self.embed(x) / (2 * self.context_size)))
 
-    def embed(self, x):
-        return self.W(self.encoder(x))
+    def embed(self, word):
+        return self.embed(self.encoder(word))
 
     def find_similar(self, word, k):
         scores = self.embed(word) @ self.W.T
@@ -109,16 +109,14 @@ def plot_loss(batch_losses, batch_indices):
     fig, axs = plt.subplots(1, 2, figsize=(10, 5))
 
     axs[0].plot(batch_indices, batch_losses)
-    axs[0].xlabel("Batch Index")
-    axs[0].ylabel("Loss")
-    axs[0].title("Loss vs. Batch Index")
+    axs[0].set_xlabel("Batch Index")
+    axs[0].set_label("Loss")
+    axs[0].set_itle("Loss vs. Batch Index")
 
-    axs[1].plot(batch_indices, batch_losses)
-    axs[1].xlabel("Batch Index")
-    axs[1].ylabel("Loss")
-    axs[1].title("Loss vs. Batch Index")
-    axs[1].set_xscale("log")
-    axs[1].set_yscale("log")
+    axs[1].loglog(batch_indices, batch_losses)
+    axs[1].set_xlabel("Batch Index")
+    axs[1].set_ylabel("Loss")
+    axs[1].set_title("Loss vs. Batch Index")
 
     plt.savefig("./cbow.png")
 
@@ -133,7 +131,7 @@ if __name__ == "__main__":
     batch_size = 2048
 
     encoder = OneHotEncoder(get_vocab(raw_text, min_word_count))
-    train_data = CBOWDataset(raw_text, encoder, CONTEXT_SIZE)
+    train_data = ShakespeareDataset(raw_text, encoder, CONTEXT_SIZE)
     train_dataloader = DataLoader(
         train_data, batch_size=batch_size, shuffle=True, num_workers=8
     )
@@ -149,7 +147,7 @@ if __name__ == "__main__":
     num_epochs = 100
     batch_losses = []
     batch_indicies = []
-    for epoch in tqdm(range(num_epochs)):
+    for epoch in range(num_epochs):
         cbow.train()
         tot_loss = 0
         for batch_idx, (context, target) in enumerate(train_dataloader):
