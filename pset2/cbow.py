@@ -159,7 +159,6 @@ if __name__ == "__main__":
             batch_indicies.append(len(batch_indicies))
             batch_losses.append(loss.item())
             tot_loss += loss.item()
-            batch_indicies.append(batch_idx)
             loss.backward()
             optimizer.step()
 
