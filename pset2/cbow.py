@@ -4,6 +4,7 @@ import urllib.request
 import string
 import re
 import torch.optim as optim
+import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
@@ -102,12 +103,21 @@ class CBOW(nn.Module):
         return self.softmax(self.fc(self.embed(x) / (2 * self.context_size)))
 
     def get_embedding(self, word):
-        return self.embed(self.encoder(word))
+        with torch.no_grad():
+            return F.normalize(self.embed(self.encoder(word).to(device)), dim=-1)
+
+    def cosine_similarity(self, w1, w2):
+        return (self.get_embedding(w1) @ self.get_embedding(w2)).item()
 
     def find_similar(self, word, k):
-        scores = self.get_embedding(word) @ self.W.T
-        sorted_idx = [(i, scores[i]) for i in torch.argsort(scores, descending=True)]
-        best = [self.encoder.decode(sorted_idx[i]) for i in range(k)]
+        with torch.no_grad():
+            scores = F.normalize(self.embed.weight.T, dim=1) @ self.get_embedding(word)
+        sorted_idx = [
+            (i, scores[i].item()) for i in torch.argsort(scores, descending=True)
+        ]
+        best = [
+            (self.encoder.vocab[sorted_idx[i][0]], sorted_idx[i][1]) for i in range(k)
+        ]
         return best
 
 
@@ -117,7 +127,7 @@ def plot_loss(batch_losses, batch_indices):
     axs[0].plot(batch_indices, batch_losses)
     axs[0].set_xlabel("Batch Index")
     axs[0].set_label("Loss")
-    axs[0].set_itle("Loss vs. Batch Index")
+    axs[0].set_title("Loss vs. Batch Index")
 
     axs[1].loglog(batch_indices, batch_losses)
     axs[1].set_xlabel("Batch Index")
@@ -133,8 +143,8 @@ if __name__ == "__main__":
     raw_text = fetch_and_preprocess(url)
 
     min_word_count = 5
-    CONTEXT_SIZE = 2
-    batch_size = 2048
+    CONTEXT_SIZE = 4
+    batch_size = 512
 
     encoder = OneHotEncoder(get_vocab(raw_text, min_word_count))
     train_data = ShakespeareDataset(raw_text, encoder, CONTEXT_SIZE)
@@ -143,14 +153,15 @@ if __name__ == "__main__":
     )
 
     EMBEDDING_DIM = 512
-    lr = 5e-3
-    weight_decay = 0
+    lr = 1e-3
+    weight_decay = 1e-3
 
+    torch.manual_seed(42)
     cbow = CBOW(len(encoder.vocab), EMBEDDING_DIM, CONTEXT_SIZE, encoder).to(device)
     optimizer = optim.Adam(cbow.parameters(), lr=lr, weight_decay=weight_decay)
     criterion = nn.NLLLoss()
 
-    num_epochs = 50
+    num_epochs = 200
     batch_losses = []
     batch_indicies = []
     for epoch in range(num_epochs):
@@ -173,6 +184,8 @@ if __name__ == "__main__":
         )
 
     plot_loss(batch_losses, batch_indicies)
+    weight_filename = f"cbow_{num_epochs}.pth"
+    torch.save(cbow.state_dict(), weight_filename)
 
     word_centers = [
         "my",
@@ -187,6 +200,10 @@ if __name__ == "__main__":
         "prevail",
     ]
 
+    # cbow.load_state_dict(torch.load(weight_filename, weights_only=True))
+    cbow.eval()
     for word in word_centers:
         cluster = cbow.find_similar(word, 10)
         print(cluster)
+
+    print(cbow.cosine_similarity("my", "thy"))
