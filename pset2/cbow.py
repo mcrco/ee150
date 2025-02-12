@@ -9,7 +9,13 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from collections import defaultdict
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device(
+    "cuda"
+    if torch.cuda.is_available()
+    else "mps"
+    if torch.backends.mps.is_available()
+    else "cpu"
+)
 
 
 # Fetch and preprocess text
@@ -144,7 +150,7 @@ if __name__ == "__main__":
     optimizer = optim.Adam(cbow.parameters(), lr=lr, weight_decay=weight_decay)
     criterion = nn.NLLLoss()
 
-    num_epochs = 100
+    num_epochs = 50
     batch_losses = []
     batch_indicies = []
     for epoch in range(num_epochs):
@@ -167,3 +173,20 @@ if __name__ == "__main__":
         )
 
     plot_loss(batch_losses, batch_indicies)
+
+    word_centers = [
+        "my",
+        "admirable",
+        "strongly",
+        "enjoyed",
+        "people",
+        "senator",
+        "deceitful",
+        "whore",
+        "and",
+        "prevail",
+    ]
+
+    for word in word_centers:
+        cluster = cbow.find_similar(word, 10)
+        print(cluster)
