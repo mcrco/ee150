@@ -1,111 +1,117 @@
 \documentclass[answers]{exam}
-\makeindex
+\usepackage{amsmath, amsfonts, amssymb, amstext, amscd, amsthm, makeidx,
+graphicx, hyperref, url, enumerate}
 
-\usepackage{amsmath, amsfonts, amssymb, amstext, amscd, amsthm, makeidx, graphicx, hyperref, url, enumerate}
-\newtheorem{theorem}{Theorem}
-\allowdisplaybreaks
+\title{Problem Set 2, EE 150/CS 148a, Winter 2025}
+\author{TAs: Andrew Zabelo and Armeet Jatyani}
+\date{}
 
 \begin{document}
-
-\begin{center}
-{\Large EE 150 - Problem Set 2} \\
-\medskip
-Marco Yang \\
-\medskip
-2237027
-\bigskip
-\end{center}
+\maketitle
 
 \begin{questions}
+
 \question[10] Dropout
 
 \begin{parts}
-\part Show that OLS regression with dropout is equivalent to Ridge Regression by
+\part[5] Dropout Equivalence to $\ell_2$ Regularization
+
+Show that OLS Regression with dropout is equivalent to Ridge Regression by
 proving that the expected squared loss with dropout is of the following form:
-
-\[
-\mathbb{E}[\mathcal{L}(w)] = ||y - f(p)Xw||^2 + g(p)||\Gamma w||^2
-\] 
-
+\[ E[L(w)] = \|y - f(p)Xw\|^2 + g(p)\|\Gamma w\|^2 \]
 where $f(p)$ and $g(p)$ are functions of $p$, and $\Gamma$ is a diagonal matrix
-with the standard deviations of features in data matrix $X$ (derived from Gram
-matrix $X^{T}X$). This result should provide some insight into how dropout
-performs a similar regularization role as an $\ell_2$ norm penalty on model
-parameters. More generally, this equivalence is approximately true for MLPs.
+with the standard deviations of features in data matrix $X$.
 
 \begin{solution}
-The square loss for OLS is
+The expected OLS loss is 
 
 \[
-\mathcal{L}(w) = ||y - Xw||^2
+\mathbb{E}[\mathcal{L}(w)] = ||y - \mathbb{E}[Xw]||^2 + \mathbb{E}[||\mathbb{E}[Xw] - Xw||^2]
 .\] 
 
-Let $X$ be $n \times d$. Decomposing into into summations, we have
-
-\begin{align*}
-||y - Xw||^2 &= \sum_{i=1}^{n} (y_{i} - X_{i} w)^2 \\ 
-&= \sum_{i=1}^{n} \left(y_{i} - \sum_{j=1}^{d}(X_{ij} w_{j})\right)^2 \\ 
-&= \sum_{i=1}^{n} \left( y_{i}^2 - 2y_{i}\sum_{j=1}^{d}(X_{ij} w_{j}) + \left( \sum_{j=1}^{d} X_{ij}w_{j} \right)^2 \right)
-.\end{align*}
-
-In dropout, every $X_{ij}$ is multiplied by an independent random variable $P_{j}$ that is $0$
-with probability $p$ and $1$ with probability $1 - p$. Dropout also enforces
-that the expected value of the input stays the same, thus every $X_{ij}$ is scaled by
-$\frac{1}{1-p}$ since the expected value of $X_{ij}$ is $1-p$ times its original value. 
-Now, multiplying every $X_{ij}$ by $P_{j} \cdot \frac{1}{1-p}$ and computing the
-expected value of the loss,
-
-\begin{align*}
-\mathbb{E}(\mathcal{L}(w)) &= \mathbb{E} \left[ \sum_{i=1}^{n}\left( y_{i}^2 - 2y_{i}\sum_{j=1}^{d}\left(X_{ij} P_{j} \left( \frac{1}{1-p} \right) w_{j}\right) + \left( \sum_{j=1}^{d} X_{ij}P_{j} \left(\frac{1}{1-p}\right) w_{j} \right)^2 \right)   \right] \\
-&= \sum_{i=1}^{n} y_{i}^2 - 2\sum_{i=1}^{n}y_{i}\mathbb{E} \left[ \sum_{j=1}^{d}\left(X_{ij} P_{j} \left( \frac{1}{1-p} \right) w_{j}\right) \right] \\ 
-    & \quad + \sum_{i=1}^{n}\mathbb{E} \left[ \left( \sum_{j=1}^{d} X_{ij}P_{j} \left( \frac{1}{1-p} \right) w_{j} \right)^2 \right].
-\end{align*}
-
-Applying linearity of expectation to the second term and expanding the square in
-the third,
-
-\begin{align*}
-\mathbb{E}(\mathcal{L}(w))&= \sum_{i=1}^{n} y_{i}^2 - 2\sum_{i=1}^{n} y_{i}\sum_{j=1}^{d}(X_{ij} w_{j}) \\ 
-    & \quad +\sum_{i=1}^{n}\mathbb{E} \left[ \sum_{j=1}^{d} \left(X_{ij}P_{j} \left( \frac{1}{1-p} \right)  w_{j}\right)^2 + 2\sum_{j=1}^{d} \sum_{k=j + 1}^{d} X_{ij}X_{ik}w_{j}w_{k}P_{j}P_{k} \cdot \left( \frac{1}{1-p} \right)^2 \right] \\
-.\end{align*}
-
-Plugging in the probabilities and applying LoE again,
-
-\begin{align*}
-\mathbb{E}(\mathcal{L}(w))&= \sum_{i=1}^{n} y_{i}^2 - 2y_{i}\sum_{i=1}^{n} \sum_{j=1}^{d}(X_{ij} w_{j}) + \frac{1}{1-p}\sum_{i=1}^{n} \sum_{j=1}^{d} (X_{ij}w_{j})^2 \\ 
-    &\quad + 2\sum_{i=1}^{n}\sum_{j=1}^{d} \sum_{k=j + 1}^{d} X_{ij}X_{ik}w_{j}w_{k} \\ 
-&= \sum_{i=1}^{n} \left( y_{i}^2 - 2y_{i}\sum_{j=1}^{d}X_{ij}w_{j} + \left( \sum_{j=11}^{d}X_{ij}w_{j} \right)^2 \right) - \left( 1 - \frac{1}{1-p} \right) \sum_{i=1}^{n}\sum_{j=1}^{d} (X_{ij}w_{j})^2 \\
-&= ||y - Xw||^2 + \frac{p}{1-p} \sum_{i=1}^{n} \sum_{j=1}^{d} (X_{ij}w_{j})^2
-.\end{align*}
-
-Notice that $\sum_{i=1}^{n} \sum_{j=1}^{d} X_{ij}^2$ is actually the sum
-of the squared norms of each column in $X$, which is also the sum of the diagonals
-of $X^{T}X$. Then, multiplying each $X_{ij}^2$ by $w_{j}^2$ is the same as
-multiplying $\text{diag}\left( X^{T}X \right) w^2$. Since $\Gamma = 
-(X^{T}X)^{\frac{1}{2}}$,
+In dropout, we zero out each weight randomly. Thus, the predictions of a OLS
+model with dropout can be written as 
 
 \[
-\mathbb{E}[\mathcal{L}(w)] = ||y - f(p)Xw||^2 + g(p)||\Gamma w||^2,
-\] 
+    \hat{y} = XMw
+,\] 
 
-where $f(p) = I_{n}$ and $g(p) = \frac{p}{1-p}$.
+where $M$ is a mask matrix of size $D \times D$ where $D$ is the dimension of
+the weights. $M$ is an indentity matrix with the $i$-th diagonal value being 0
+if $w_{i}$ is zeroed out for dropout. Thus, the expected loss for OLS with
+dropout is
+
+\[
+\mathbb{E}[\mathcal{L}(w)] = ||y - \mathbb{E}[XMw]||^2 + \mathbb{E}[||\mathbb{E}[XMw] - XMw||^2]
+.\] 
+
+We know $\mathbb{E}[M]=\frac{1}{1-p}I$, where $I$ is a $D \times D$ identity
+matrix. This is because each value along the diagonal is an independent
+Bernoulli random variable with probability of $p$ of being 0 and $1-p$ to be 1.
+
+Computing the bias via linearity of expectation,
+
+\[
+||y - \mathbb{E}[XMw]||^2 = ||y - X\mathbb{E}[M]w||^2 = \left|\left|y - (1-p)Xw \right|\right|^2
+.\] 
+
+To compute the variance, we first substitute the expected value of the
+prediction:
+
+\[
+\sigma^2 = \mathbb{E}[||\mathbb{E}[XMw] - XMw||^2] = \mathbb{E}[||(1-p)Xw - XMw||^2]
+.\] 
+
+Now, we expand the expression inside the outer expected value using its
+quadratic form:
+
+\begin{align*}
+\sigma^2 &= ||(1-p)Xw - XMw||^2 \\ 
+&= ((1-p)Xw)^T((1-p)Xw) - 2 ((1-p)Xw)^{T}(XMw) + (XMw)^{T}(XMw) \\ 
+&= (1-p)^2w^{T}X^{T}Xw - 2(1-p)w^{T}X^{T}XMw + w^{T}M^{T}X^{T}XMw
+.\end{align*}
+
+Computing the expected value,
+
+\begin{align*}
+\sigma^2 &= \mathbb{E}\left[(1-p)^2w^{T}X^{T}Xw - 2(1-p)w^{T}X^{T}XMw + w^{T}M^{T}X^{T}XMw\right] \\
+         &= (1-p)^2w^{T}X^{T}Xw -2(1-p)w^{T}X^{T}X\mathbb{E}[M]w + \mathbb{E}[w^{T}M^{T}X^{T}XMw] \\ 
+         &= (1-p)^2w^{T}X^{T}Xw -2(1-p)^2w^{T}X^{T}Xw + (1-p)w^{T}X^{T}Xw
+.\end{align*}
+
+In the above computation, the last expected value in the second line is
+simplifies as such because the expected value of the square of a Bernoulli r.v.
+is the expected value of just the regular Bernoulli r.v.
+
+Since we know $\Gamma = \sqrt{X^{T}X}$, $||w^{T}X^{T}Xw|| = ||\Gamma w||^2$.
+Substituting this in,
+
+\[
+\sigma^2 
+= (1-p)^2 ||\Gamma w|^2 - 2(1-p)^2||\Gamma w|^2 + (1-p)||\Gamma w|^2 
+= p(1-p)||\Gamma w||^2
+.\] 
+
 \end{solution}
 
-\part Use python to compute the expected error and the theoretical expected 
-error.
+\part[5] Dropout Code
+Create a copy of the Dropout Colab Notebook and rename it to Dropout \{first name last name\}.ipynb. Follow the instructions to generate a Loss vs. Dropout Rate plot.
 
 \begin{solution}
-Done in colab.
+\href{https://colab.research.google.com/drive/1sBnaC6m1BGGmdqYaBcLRK2_5Ey0d2d4H?usp=sharing}{colab link}
 \end{solution}
 \end{parts}
 
-\question[10] Batchnorm
+\question[10] Batch Normalization
 
 \begin{parts}
-\part Given $\frac{\partial \mathcal{L}}{\partial Y}$, where $Y$ is the output
-of batchnorm, derive $\frac{\partial \mathcal{L}}{\partial \beta}, 
-\frac{\partial \mathcal{L}}{\partial \gamma}, 
-\frac{\partial \mathcal{L}}{\partial X}$.
+\part[5] BatchNorm Backpropagation
+Given $\frac{\partial L}{\partial Y}$, derive expressions for:
+\begin{itemize}
+    \item $\frac{\partial L}{\partial \beta}$
+    \item $\frac{\partial L}{\partial \gamma}$
+    \item $\frac{\partial L}{\partial X}$
+\end{itemize}
 
 \begin{solution}
 \[
@@ -215,39 +221,27 @@ In the equation above, $[\gamma^{T}]$ is the $N \times D$ matrix with its rows b
 $\gamma^{T}$.
 \end{solution}
 
-\part Implement batchnorm and compare with Pytorch's.
+\part[5] Batch Normalization Code
+Implement BatchNorm from scratch and verify that your implementation matches PyTorch’s built-in BatchNorm function.
 
 \begin{solution}
-Code: \href{https://colab.research.google.com/drive/1fvWNh_8h5VLk5Xgeo1WXGn6VHQGhb66g?usp=sharing}{colab link}
+\href{https://colab.research.google.com/drive/1fvWNh_8h5VLk5Xgeo1WXGn6VHQGhb66g?usp=sharing}{colab link}
 
 Holy shit it actually works I didn't think my formula was right since it was
 different from the batchnorm paper's.
 \end{solution}
 \end{parts}
 
-\question[15] Layernorm
-
-In Layernorm,
-
-\[
-Y_{ij} = \text{LN}_{\gamma,\beta}(X_{ij}) = \gamma_{j}\hat{X}_{ij} + \beta_{j}
-,\] 
-
-where
-
-\begin{gather*}
-\mu_{i} = \frac{1}{D} \sum_{j=1}^{D}X_{ij} \\ 
-\sigma_{i}^2 = \frac{1}{D} \sum_{j=1}^{D} (X_{ij}-\mu_{i})^2 \\
-\hat{X}_{ij} = \frac{X_{ij} - \mu_{i}}{\sqrt{\sigma_{i}^2+\epsilon}}
-\end{gather*}
-
-Given $\frac{\partial \mathcal{L}}{\partial Y}$, derive 
-$\frac{\partial \mathcal{L}}{\partial \beta},
-\frac{\partial \mathcal{L}}{\partial \gamma}, 
-\frac{\partial \mathcal{L}}{\partial X}$.
+\question[15] Layer Normalization
 
 \begin{parts}
-\part Backprop Derivation
+\part[5] LayerNorm Backpropagation
+Given $\frac{\partial L}{\partial Y}$, derive expressions for:
+\begin{itemize}
+    \item $\frac{\partial L}{\partial \beta}$
+    \item $\frac{\partial L}{\partial \gamma}$
+    \item $\frac{\partial L}{\partial X}$
+\end{itemize}
 
 \begin{solution}
 There's no change for $\beta$ and $\gamma$ since the dimensions for those are
@@ -279,11 +273,10 @@ Y_{ij} = \gamma_{j}\hat{X}_{ij} + \beta_{j}
 \end{bmatrix}
 \] 
 
-As for $X$, since it's pretty much just the transposed version of batchnorm, if
-we switch our dimension for $\mu, \sigma^2$ to the batch dimension and sum from
-$j=1\ldots D$, we should have the correct formulas for layernorm backprop.
-Notice that we also commute any matrix multiplications since we want it over the
-$D$ dimension this time, not the $N$ dimension.
+As for $X$, since it's analagous to the transposed version of batchnorm, if we
+sum from $j=1\ldots D$, we should have the correct formulas for layernorm
+backprop. Notice that we also commute any matrix multiplications since we want
+it over the $D$ dimension this time, not the $N$ dimension.
 
 \[
 \frac{\partial \mathcal{L}}{\partial X} = 
@@ -293,16 +286,17 @@ $D$ dimension this time, not the $N$ dimension.
 .\] 
 \end{solution}
 
-\part Code
+
+\part[5] Layer Normalization Code
+Implement LayerNorm from scratch and verify correctness against PyTorch’s
+built-in LayerNorm.
 
 \begin{solution}
     \href{https://colab.research.google.com/drive/1iVcwAy4x0Yi_5Zprh3HvZzJjjhYhr73C?usp=sharing}{colab link}
 \end{solution}
 
-\part Puzzle: Based on the batchnorm of a $16 \times 16$ symmetric matrix with
-affine transformation $\gamma=1, \beta=0$, given the layernorm of the matrix
-with the same affine transformation, how many elements of the batchnorm output
-do you know?
+\part[5] BatchNorm LayerNorm Puzzle
+Bob has access to $Y$ from BatchNorm. How many elements in $Z$ (LayerNorm output) does Bob know with certainty if $X$ is symmetric?
 
 \begin{solution}
 All of them. If the matrix is symmetric, then the mean and variance across the
@@ -311,21 +305,200 @@ to doing batchnorm on the transpose of a matrix, is the same.
 \end{solution}
 \end{parts}
 
-\question[40] Regularization, Optimizers, Augmentation in MNIST
+\question[40] Regularization, Optimizers, and Augmentation in MNIST
 
 \begin{parts}
-\part Regularization
+\part[10] Regularization
+\begin{enumerate}
+\item Plot the distribution of weights of a newly initialized model. Let $X$ be
+    a random variable that is the value of a parameter chosen at random from our
+    uninitialized model. Write an expression for the PDF of $X$. Why is it
+    beneficial for the standard deviation of the initial distribution of a layer
+    to decrease as layer width increases?
+\item Plot the distribution of weights of a model trained using SGD.
+    Qualitatively, what is the new distribution of weights?
+\item Now plot the distribution of weights of a model trained using SGD and
+    weight decay $0.01$. Qualitatively, what changed about the distribution? In
+    theory, why should this help a model’s ability to generalize to unseen data?
+\item $\ell_2$ regularization on weights (not to be confused with $\ell_2$
+    regularization on model outputs) and weight decay are often used
+    interchangeably, but they are in fact distinct methods. Prove that for
+    standard SGD, $\ell_2$ regularization and weight decay are equivalent.
+
+Weight decay update: \[ w_{t+1} \leftarrow w_t - (\nabla_w L +
+\lambda_{\text{weight decay}} w_t) \]
+
+$\ell_2$ regularized update: \[ w_{t+1} \leftarrow w_t - (\nabla_w L) \] where
+\[ L = \lambda_{\ell_2} \sum_{i} w_i^2 \]
+
+\item Use your solution from part (d) to run SGD with $\ell_2$ regularization
+    with the $\ell_2$ lambda that would make it equivalent to SGD with weight
+    decay $0.01$. How does the distribution of weights compare to part (c)?
+\end{enumerate}
 
 \begin{solution}
+\href{https://colab.research.google.com/drive/1tJlZ-QLsr9tMvhipsfVXQ-yYTJ757TNL?usp=sharing}{colab}
 
+The distribution of new weights is the sum of multiple uniform distributions.
+The pdf is roughly
+
+\[
+p(x) \approx \begin{cases}
+    0.03 &\quad \text{if } x \in (-0.5, 0.5) \\
+    0.14 &\quad \text{if } x \in [-0.1, -0.05] \cup [0.05, 0.1]
+\end{cases}
+.\] 
+
+It makes sense for the the standard deviation of the initial distribution of a
+layer to decrease as layer width increases to make sure the variance of the
+proceeding layer has a similar variance. 
+
+The distribution of weights trained with SGD is normal. In theory, this makes
+sense since naturally occuring data generally follows a uniform distribution.
+
+$\ell_2$ regularization and and weight decay are the same because the gradient
+of the sum of the squares of the weights is just the current weights times 2.
+Thus, the $\lambda_{\ell_2} = \frac{1}{2} \lambda_{\text{weight decay}}$.
 \end{solution}
 
-\part Optimizers
+\part[15] Optimizers:
+\begin{enumerate}
+\item Derive the bias correction term $\frac{1}{1-\beta^t}$ for the Adam
+    optimizer and show that it is necessary to un-bias the estimates for the
+    first and second moments.
+\item Explain why adding an $\ell_2$ regularization penalty to the loss is
+    problematic when using SGD with momentum. Discuss its effect when using
+    RMSProp and Adam optimizers.
+\item Explain how AdamW correctly penalizes weights in contrast with Adam.
+\item Run the following and report the validation accuracies. Which two methods
+    perform best? Why do the others perform worse?
+\begin{itemize}
+    \item Adam, default
+    \item Adam, $\ell_2$ lambda=0.005
+    \item Adam, weight decay=0.01
+    \item AdamW, $\ell_2$ lambda=0.005
+    \item AdamW, weight decay=0.01
+\end{itemize}
+\end{enumerate}
 
 \begin{solution}
-s
+The formula for the moment are
+
+\begin{align*}
+m_{t} &= \beta_1 m_{t-1} + (1 - \beta_1)g_{t} \\
+v_{t} &= \beta_2 m_{t-1} + (1 - \beta_2)g_{t}^2 \\
+.\end{align*}
+
+Computing the expected value of the moments,
+
+\begin{align*}
+    \mathbb{E}[m_{t}] &= \mathbb{E}[\beta_1 m_{t-1} + (1 - \beta_1)g_{t}] \\
+\mathbb{E}[v_{t}] &= \beta_2 m_{t-1} + (1 - \beta_2)g_{t}^2 \\
+.\end{align*}
+
+
+As the model becomes more stable and $g_i \to \mathbb{E}[g]$, the Adam
+update becomes
+
+F
+
+Using Adam with no weight decay or regularization worked best, but using AdamW
+with weight decay worked the best since AdamW accounts for momentum when using
+weight decay. AdamW does this by performing the weight decay updated and the 
+momentum update separately, not by backpropagating the weight decay term as a
+gradient of the loss. Thus, the gradient from the L2 loss is not factored in
+when it computes the momentum.
+\end{solution}
+
+\part[15] Data Augmentation: 
+\begin{enumerate}
+\item Implement methods for common image transformations: rotations, translations, blurring, scaling, shear, and Gaussian noise addition.
+\item Display the effects of each augmentation using one example for each digit (0-9). Ensure augmented images remain recognizable.
+\item Evaluate augmentation effects on performance:
+\begin{itemize}
+    \item Train a model on the small dataset and note validation accuracy.
+    \item Apply different augmentation strengths and train models to report:
+    \begin{itemize}
+        \item Augmentation that decreases accuracy by $\leq1\%$.
+        \item Augmentation that decreases accuracy by $1-3\%$.
+        \item Augmentation that decreases accuracy by $\geq3\%$.
+    \end{itemize}
+\end{itemize}
+\item Investigate rotation range impact by setting $(-180,180)$ and analyze misclassifications via a confusion matrix.
+\item Develop a method to randomly apply augmentations to scale the dataset to 50,000 images. Train models and report validation accuracy for:
+\begin{itemize}
+    \item Small dataset (5,000 images).
+    \item Small dataset copied 10 times (50,000 images).
+    \item Augmented dataset (50,000 images).
+    \item Original dataset (50,000 images).
+\end{itemize}
+\end{enumerate}
+
+\begin{solution}
+\href{https://colab.research.google.com/drive/1tJlZ-QLsr9tMvhipsfVXQ-yYTJ757TNL?usp=sharing}{colab}
 \end{solution}
 \end{parts}
+
+\question[25] Word2Vec
+
+\begin{parts}
+\part[10] Implement CBOW
+Implement and train the Continuous Bag of Words (CBOW) model on the Shakespeare
+dataset.
+
+\begin{solution}
+\href{https://colab.research.google.com/drive/1kcemVhxnxRkgGHJukS7A69doKRPJ_-ox?usp=sharing}{colab link}
+\end{solution}
+
+\part[15] Semantically Similar Clusters
+Find clusters of words that exhibit semantic similarity based on trained
+embeddings.
+
+\begin{solution}
+\begin{itemize}
+\item \textbf{my} (1.0), \textbf{his} (0.34), \textbf{your} (0.33), \textbf{thy}
+    (0.31), \textbf{lawrence’} (0.28), \textbf{our} (0.27), \textbf{the} (0.26),
+    \textbf{sicilian} (0.26), \textbf{hastings’} (0.24), \textbf{her} (0.23)
+\item \textbf{brother} (1.0), \textbf{nunnery} (0.26), \textbf{son} (0.24),
+    \textbf{sheepshearing} (0.22), \textbf{brother’s} (0.21), \textbf{crutch}
+    (0.21), \textbf{sons} (0.21), \textbf{beck} (0.2), \textbf{cow} (0.2),
+    \textbf{daughter} (0.2)
+\item \textbf{slay} (1.0), \textbf{kill} (0.27), \textbf{submit} (0.27),
+    \textbf{expose} (0.25), \textbf{railed} (0.25), \textbf{fade} (0.25),
+    \textbf{practise} (0.25), \textbf{dardanius} (0.24), \textbf{guide} (0.24),
+    \textbf{according} (0.24)
+\item \textbf{shall} (1.0), \textbf{will} (0.28), \textbf{blithe} (0.26),
+    \textbf{longed} (0.26), \textbf{should} (0.25), \textbf{if’t} (0.23),
+    \textbf{may} (0.23), \textbf{can} (0.22), \textbf{would} (0.22),
+    \textbf{tumbled} (0.22)
+\item \textbf{people} (1.0), \textbf{ground} (0.28), \textbf{forum} (0.26),
+    \textbf{members} (0.24), \textbf{multitudes} (0.23), \textbf{ambassadors}
+    (0.22), \textbf{wing} (0.22), \textbf{disciplines} (0.22), \textbf{lights}
+    (0.21), \textbf{complaint} (0.21)
+\item \textbf{senator} (1.0), \textbf{bout} (0.26), \textbf{fisherman} (0.25),
+    \textbf{soldier} (0.25), \textbf{citizen} (0.25), \textbf{witch} (0.24),
+    \textbf{watch} (0.22), \textbf{singly} (0.21), \textbf{gentleman} (0.21),
+    \textbf{exploits} (0.21)
+\item \textbf{dishonest} (1.0), \textbf{wiser} (0.29), \textbf{wight} (0.29),
+    \textbf{wellfavoured} (0.29), \textbf{recount} (0.28), \textbf{drench}
+    (0.27), \textbf{respite} (0.27), \textbf{ides} (0.26), \textbf{sentry}
+    (0.25), \textbf{cutpurse} (0.25)
+\item \textbf{man} (1.0), \textbf{man”} (0.29), \textbf{squire} (0.26),
+    \textbf{carcass} (0.26), \textbf{snail} (0.25), \textbf{pig} (0.24),
+    \textbf{sincerity} (0.24), \textbf{breeder} (0.24), \textbf{ducat} (0.24),
+    \textbf{woman} (0.23)
+\item \textbf{horse} (1.0), \textbf{mare} (0.27), \textbf{crutch} (0.25),
+    \textbf{club} (0.23), \textbf{sword} (0.23), \textbf{beaver} (0.22),
+    \textbf{bounties} (0.22), \textbf{tribe} (0.21), \textbf{reference} (0.21),
+    \textbf{team} (0.21)
+\item \textbf{prevail} (1.0), \textbf{attain} (0.29), \textbf{detain} (0.29),
+    \textbf{peruse} (0.29), \textbf{meddle} (0.28), \textbf{mix’d} (0.27),
+    \textbf{oaks} (0.26), \textbf{o’ertake} (0.26), \textbf{befall} (0.26),
+    \textbf{surrender} (0.25)
+\end{itemize}
+\end{solution}
+\end{parts}
+
 \end{questions}
 
 \end{document}
