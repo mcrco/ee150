@@ -299,9 +299,11 @@ built-in LayerNorm.
 Bob has access to $Y$ from BatchNorm. How many elements in $Z$ (LayerNorm output) does Bob know with certainty if $X$ is symmetric?
 
 \begin{solution}
-All of them. If the matrix is symmetric, then the mean and variance across the
-batch and feature dimensions are the same. Thus, layernorm, which is analagous
-to doing batchnorm on the transpose of a matrix, is the same.
+For any $\gamma, \beta$, all of them. If the matrix is symmetric, then the mean
+and variance across the batch and feature dimensions are the same. Thus, the
+normalization without the affine transformation across the layer and batch
+dimensions are the same. Then, applying the affine transformation doesn't change
+anything since the outputs of the normalization are the same.
 \end{solution}
 \end{parts}
 
@@ -389,18 +391,44 @@ m_{t} &= \beta_1 m_{t-1} + (1 - \beta_1)g_{t} \\
 v_{t} &= \beta_2 m_{t-1} + (1 - \beta_2)g_{t}^2 \\
 .\end{align*}
 
-Computing the expected value of the moments,
+Rewriting this non-recursively as a sum of terms,
 
 \begin{align*}
-    \mathbb{E}[m_{t}] &= \mathbb{E}[\beta_1 m_{t-1} + (1 - \beta_1)g_{t}] \\
-\mathbb{E}[v_{t}] &= \beta_2 m_{t-1} + (1 - \beta_2)g_{t}^2 \\
+m_{t} &= (1-\beta_1) \sum_{i=1}^{t}\beta_1^{t-i} g_{i}  \\
+v_{t} &= (1-\beta_2) \sum_{i=1}^{t}\beta_2^{t-i} g_{i}^2 \\
 .\end{align*}
 
+Taking the expecvted value,
 
-As the model becomes more stable and $g_i \to \mathbb{E}[g]$, the Adam
-update becomes
+\begin{align*}
+\mathbb{E}[m_{t}] &= \mathbb{E}\left[(1-\beta_1) \sum_{i=1}^{t}B_1^{t-i} g_{i}\right] \\
+\mathbb{E}[v_{t}] &= \mathbb{E}\left[(1-\beta_2) \sum_{i=1}^{t}\beta_2^{t-i} g_{i}^2\right] \\
+.\end{align*}
 
-F
+As the model converges, $g_i$ becomes more stable and $g_i \to \mathbb{E}[g]$, 
+the expected value becomes
+
+\begin{align*}
+\mathbb{E}[m_{t}] &= (1-\beta_1) \sum_{i=1}^{t}B_1^{t-i} \mathbb{E}[g] \\
+\mathbb{E}[v_{t}] &= (1-\beta_2) \sum_{i=1}^{t}\beta_2^{t-i} \mathbb{E}[g^2]\\
+.\end{align*}
+
+Since we can estimate the expected values related to the gradients as constants,
+we can take them out and sum the geometric series:
+
+\begin{align*}
+\mathbb{E}[m_{t}] &= (1-\beta_1) \frac{1-\beta_1^{t}}{1-\beta_1} \mathbb{E}[g] \\
+&= (1-\beta_1^{t})\mathbb{E}[g] \\
+\mathbb{E}[v_{t}] &= (1-\beta_2) \frac{1-\beta_2^{t}}{1-\beta_2} \mathbb{E}[g^2] \\
+&= (1-\beta_2^{t})\mathbb{E}[g^2]
+.\end{align*}
+
+$m_{t}$ and $v_{t}$ are supposed to be moving averages of the gradient and
+gradient squared, but clearly their expected value is biased by a factor of
+$(1-\beta_1^{t})$ and $(1-\beta_2^{t})$. Thus, to unbias them, we need to
+multiply them by $\frac{1}{1-\beta_1^{t}}$ and $\frac{1}{1-\beta_2^{t}}$.
+
+\href{https://colab.research.google.com/drive/1tJlZ-QLsr9tMvhipsfVXQ-yYTJ757TNL?usp=sharing}{colab}
 
 Using Adam with no weight decay or regularization worked best, but using AdamW
 with weight decay worked the best since AdamW accounts for momentum when using
