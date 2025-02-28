@@ -1,0 +1,83 @@
+
+\begin{problem}{Convolutional Neural Networks \hfill [40 pts]}{prob:cnns}
+\label{prob:cnns}
+
+\begin{adjustwidth}{2em}{2em}
+    
+    \textbf{(a)} \textbf{Write a convolution algorithm from scratch} \hfill (10 pts)
+    \begin{adjustwidth}{2em}{2em}
+    
+    i) Implement the \texttt{Conv2d} class in \texttt{conv.py}. \\
+    
+    ii) Implement the \texttt{FasterConv2d} class in \texttt{conv.py}. Ensure all tests in $\texttt{conv\_tests}$ pass.\\
+    
+    iii) Run $\texttt{benchmark\_conv2d.py}$ to compare your implementations to the PyTorch Implementation. For a batch of 16 $28 \times 28$ images, how many times faster was your faster implementation compared to your initial implementation and the PyTorch implementation compared to your faster implementation?
+    \\
+    
+    iv) Give a reason for why the PyTorch implementation is faster. \\
+    \end{adjustwidth} 
+    \vspace{5px}
+
+    \textbf{(b)} \textbf{Implement and train a CNN to classify MNIST} \hfill (5 pts)
+    \begin{adjustwidth}{2em}{2em}
+    
+    i) Implement the \texttt{CNN} class in \texttt{cnn.py}. \\
+    
+    ii) Complete the \texttt{TODO}s in \texttt{train\_test.py} that are needed to train the CNN. Then, run \texttt{train\_mnist.py} to achieve at least $96\%$ test accuracy after 5 training epochs. After training, take a look at the $\texttt{results/}$ folder to find results, plots, and the saved model. Attach your accuracy and loss plots here and report your test accuracy.
+
+    \\
+
+    \end{adjustwidth} 
+    \vspace{5px}
+
+    \textbf{(c)} \textbf{Manually picking filters} \hfill (5 pts)
+    \begin{adjustwidth}{2em}{2em}
+    Copy any necessary code from your \texttt{CNN} class to the \texttt{ManualCNN} class. Now, instead of letting the convolutional layer learn 4 filters, you will set the 4 filters manually based on what filters might result in features useful for distinguishing numbers. Initialize $\texttt{self.conv.weight.data}$ manually and note that we set $\texttt{self.conv.weight.requires\_grad}$ to $\texttt{False}$ so the filters remain fixed during training (only the fully-connected layer will train). Your goal is to achieve at least 94\% test accuracy. Take a look at the $\texttt{ArgumentParser}$ in $\texttt{train\_mnist.py}$ to determine how to train the $\texttt{ManualCNN}$. Attach your accuracy and loss plots here and report your test accuracy. Once you are satisfied with the performance of your filters, run $\texttt{visualize\_filters.py}$ to visualize your chosen filters' effects on MNIST digits. Note that it requires the path to your saved $\texttt{ManualCNN}$ model. Attach the visualization here.\\
+    \end{adjustwidth}
+    \vspace{5px}
+    \textbf{(d)} \textbf{Transfer Learning using AlexNet on PCAM image dataset} \hfill (5 pts)
+    \begin{adjustwidth}{2em}{2em}
+        i) What is AlexNet and why is it such a big deal? (1 sentence) \\
+
+        ii) Make a copy of \href{https://colab.research.google.com/drive/1HnRFDWtVqBgMh-9sSF1WnHwGJQ5bvLXF?usp=sharing}{this notebook}, complete it, and provide a link to your colab notebook that is shareable. Make one observation of the loss/accuracy plots at the end and give a reason for it.  \\
+    \end{adjustwidth}
+    \textbf{(e)} \textbf{Why skip connections prevent vanishing gradients} \hfill (10 pts)
+    \begin{adjustwidth}{2em}{2em}
+
+    Consider an $L$-layer neural network with each layer having a width of 1. Let $h^{(0)}$ be the input of the network and for $l = 1, \dots, L$, define
+    $$h^{(l)} = \sigma(w^{(l)}h^{(l - 1)} + b^{(l)})$$
+    where $h^{(L)} = \hat{y}$ is the output of the network.
+
+    i) Write an expression for $\frac{\partial \mathcal{L}}{\partial w^{(1)}}$ incorporating terms of the form $\frac{\partial h^{(l)}}{\partial h^{(l-1)}}$. \\
+
+    ii) Write an expression for $\frac{\partial h^{(l)}}{ \partial h^{(l-1)}}$. Treat $\sigma$ as an arbitrary activation function. Then, compute this expression for $h^{(l - 1)} = 0.1, w^{(l)} = 0.1, b^{(l)} = 0$ and $\sigma(z) = \text{ReLU}(z)$. \\
+
+    iii) If $\left|\frac{\partial h^{(l)}}{ \partial h^{(l-1)}}\right| < 1$, what happens to $\frac{\partial \mathcal{L}}{ \partial w^{(1)}}$ for large $L$? Why does this harm training? What about if $\left|\frac{\partial h^{(l)}}{ \partial h^{(l-1)}}\right| > 1$? \\
+    
+    iv) Let's say we add skip connections to our neural network. This means that
+    
+    $$h^{(l)} = \sigma(w^{(l)}h^{(l - 1)} + b^{(l)}) + h^{(l - 1)}$$
+    
+    Write an expression for $\frac{\partial h^{(l)}}{ \partial h^{(l-1)}}$ and explain how the skip connection alleviates the vanishing gradient problem. \\
+    
+    \end{adjustwidth}
+
+    
+    
+    \textbf{(f)} \textbf{Visualize loss landscape of ResNet} \hfill (5 pts)
+    \begin{adjustwidth}{2em}{2em}
+        \href{https://arxiv.org/abs/1512.03385}{ResNet} is a CNN architecture that takes advantage of residual connections (skip connections) to train very deep networks reliably. It is the most widely used CNN architecture today. Visit this \href{http://www.telesens.co/loss-landscape-viz/viewer.html}{link} to view some visualizations of the loss landscape for various ResNets with and without skip connections. ``No short'' means without skip connections. \\
+        
+
+        i) Explain the difference between the loss landscapes of ResNet20 (No short) and ResNet56 (No short). (1 -- 2 sentences) \\
+
+        ii) Compare the loss landscapes of ResNet56 (No short) to ResNet56 (short). In terms of minimizing loss, why is the ResNet56 (short) loss landscape preferable? (1 -- 2 sentences)
+        
+    \end{adjustwidth}
+\end{adjustwidth}
+
+\end{problem}
+
+\begin{solution*}{}{}
+Student solution here.
+\end{solution*}

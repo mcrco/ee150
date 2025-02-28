@@ -1,0 +1,67 @@
+
+\begin{problem}{Transformers \hfill [20 pts]}{prob:rnns}
+\label{prob:rnns}
+
+\begin{adjustwidth}{2em}{2em}
+    
+    \textbf{(a) Attention } \hfill (10 pts) 
+    
+    \begin{adjustwidth}{2em}{2em}
+    i) Write down the scaled dot-product self-attention function $\text{Attention}(x)$ in terms of $x, W_q, W_k, W_v$, and $d_k$. What are the shapes of $x, W_q, W_k, W_v$ in terms of sequence length $T$, embedding dimension $D$, key dimension $d_k$, and value dimension $d_v$? For simplicity, we are not considering the batch dimension because in implementation this function is applied to every sequence in the batch the same way. You can use the function $\text{softmax}(z)$ without defining it. What is the shape of the output of $\text{Attention}(x)$?
+    \\
+
+    ii) The gradient of the softmax function is very small for inputs of large magnitude. Assume that $Q = xW_q$ and $K = xW_k$ are random variables sampled from a multivariate standard normal and $T = 1$. What is the distribution of the input to the softmax function if we don't scale the input by $1/\sqrt{d_k}$? Why does scaling by $1/\sqrt{d_k}$ alleviate the aforementioned issue? Hint: Write out the dot product and apply the Central Limit Theorem.
+    \\
+
+    iii) Write down how to compute multi-head self attention in terms of $x, W_o,$ the sequences of matrices $\{W_k^i\}_{i = 1}^h$, $\{W_q^i\}_{i = 1}^h$, $\{W_v^i\}_{i = 1}^h$, $d_v$, and $d_k$, where $h$ is the number of heads. Again, you can use $\text{softmax}(z)$ without defining it. What are the shapes of $W_k^i$, $W_q^i $, $W_v^i$, and $W_o$? Assume that the outputs have dimension $D$.
+\\
+
+    iv) Implement the \texttt{SelfAttention} class in \texttt{attention.py}. Implement the \texttt{MultiHeadAttention} class as well. Ensure all the \texttt{attention\_tests} pass. 
+
+    \end{adjustwidth} 
+    \vspace{5px}
+
+    
+    \textbf{(b)} \textbf{Train Transformer on IMDB Reviews to classify sentiment} \hfill (5 pts)
+    \begin{adjustwidth}{2em}{2em}
+
+    Implement the \texttt{TODO}s in \texttt{transformer.py}. Train the Transformer using \texttt{train\_imbd.py} for 5 epochs, a minimum sequence length of 0 and a maximum sequence length of 200. Then train the Transformer for 5 epochs, on a minimum sequence length of 200 and a maximum sequence length of 400. Attach your accuracy and loss plots here for both models and report test accuracies.
+        \end{adjustwidth} 
+
+        \vspace{5px}
+
+    \textbf{(c)} \textbf{Compare Sequence Models} \hfill (2.5 pts)
+    \begin{adjustwidth}{2em}{2em}
+        Fill in the following table with test accuracies of all the models. Note that architecture hyperparameters were already adjusted for you so that each model has the same number of parameters, making this a fair comparison. What do you notice? (1 -- 2 sentences)
+
+        \begin{center}
+            \begin{tabular}{|l|c|c|}
+            \hline
+            \textbf{Model}     & \textbf{Short Sequences} & \textbf{Long Sequences} \\
+            \hline
+            RNN        &   &   \\
+            \hline
+            LSTM       &   &   \\
+            \hline
+            Transformer &   &   \\
+            \hline
+        \end{tabular}
+    \end{center}
+
+    \end{adjustwidth} 
+    \vspace{5px}
+
+    \textbf{(d)} \textbf{Try your model} \hfill (2.5 pts)
+    \begin{adjustwidth}{2em}{2em}
+
+    Metrics can tell one story, but trying a model first hand can tell another. Run \texttt{test\_imdb.py} with the path to the Transformer you trained on shorter sequences. You'll be able to write your own reviews and see what your trained Transformer predicts its sentiment as. Give an example of a very positive (95\%+ confidence) review, a very negative review, and a review with a confidence below 90\%.
+        
+    \end{adjustwidth} 
+    \vspace{5px}
+\end{adjustwidth}
+
+\end{problem}
+
+\begin{solution*}{}{}
+Student solution here.
+\end{solution*}

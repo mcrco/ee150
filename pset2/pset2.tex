@@ -83,7 +83,9 @@ In the above computation, the last expected value in the second line is
 simplifies as such because the expected value of the square of a Bernoulli r.v.
 is the expected value of just the regular Bernoulli r.v.
 
-Since we know $\Gamma = \sqrt{X^{T}X}$, $||w^{T}X^{T}Xw|| = ||\Gamma w||^2$.
+We know that $\Gamma$, the standard deviation matrix, is the diagonal matrix
+with elements being the square root of the sum of the variances in each column
+of covariance matrix of $X$. Thus, $||w^{T}X^{T}Xw|| = ||\Gamma w||^2$.
 Substituting this in,
 
 \[
@@ -92,6 +94,13 @@ Substituting this in,
 = p(1-p)||\Gamma w||^2
 .\] 
 
+Thus, we have 
+
+\[ 
+E[L(w)] = \|y - f(p)Xw\|^2 + g(p)\|\Gamma w\|^2 ,
+\]
+
+where $f(p) = 1-p$ and $g(p)=p(1-p)$
 \end{solution}
 
 \part[5] Dropout Code
@@ -352,15 +361,16 @@ p(x) \approx \begin{cases}
 .\] 
 
 It makes sense for the the standard deviation of the initial distribution of a
-layer to decrease as layer width increases to make sure the variance of the
-proceeding layer has a similar variance. 
+layer to decrease as layer width increases to make the next layer doesn't have
+an insanely high variance/standard deviation. 
 
 The distribution of weights trained with SGD is normal. In theory, this makes
 sense since naturally occuring data generally follows a uniform distribution.
 
 $\ell_2$ regularization and and weight decay are the same because the gradient
 of the sum of the squares of the weights is just the current weights times 2.
-Thus, the $\lambda_{\ell_2} = \frac{1}{2} \lambda_{\text{weight decay}}$.
+Thus, the $\lambda_{\ell_2} = \frac{1}{2} \lambda_{\text{weight decay}}$. The
+distribution of the weights is the same.
 \end{solution}
 
 \part[15] Optimizers:
@@ -428,7 +438,14 @@ gradient squared, but clearly their expected value is biased by a factor of
 $(1-\beta_1^{t})$ and $(1-\beta_2^{t})$. Thus, to unbias them, we need to
 multiply them by $\frac{1}{1-\beta_1^{t}}$ and $\frac{1}{1-\beta_2^{t}}$.
 
-\href{https://colab.research.google.com/drive/1tJlZ-QLsr9tMvhipsfVXQ-yYTJ757TNL?usp=sharing}{colab}
+Adding $\ell_2$ regularization penalty to the loss whne using SGD with momentum,
+RMSProp, and Adam is problematic because the penalty term creates a gradient
+that is not related to the training error when these optimizers calculate the
+moving average for momentum. AdamW correctly penalizes weights because separates
+the calculation for weight decay from loss by simply removing a scalar factor of
+the weights during the update rule instead of using the $\ell_2$ penalty term.
+
+\href{https://colab.research.google.com/drive/1tJlZ-QLsr9tMvhipsfVXQ-yYTJ757TNL?usp=sharing}{Colab}
 
 Using Adam with no weight decay or regularization worked best, but using AdamW
 with weight decay worked the best since AdamW accounts for momentum when using
@@ -464,6 +481,14 @@ when it computes the momentum.
 
 \begin{solution}
 \href{https://colab.research.google.com/drive/1tJlZ-QLsr9tMvhipsfVXQ-yYTJ757TNL?usp=sharing}{colab}
+
+\begin{center}
+\includegraphics[width=0.8\textwidth]{img/4d.png}
+\end{center}
+
+The most misclassified numbers are 4 and 9, with 6 and 9 being the second most
+misclassified (I'm summing up the matrix with its transpose and subtracting
+diagonal).
 \end{solution}
 \end{parts}
 
@@ -507,10 +532,10 @@ embeddings.
     \textbf{soldier} (0.25), \textbf{citizen} (0.25), \textbf{witch} (0.24),
     \textbf{watch} (0.22), \textbf{singly} (0.21), \textbf{gentleman} (0.21),
     \textbf{exploits} (0.21)
-\item \textbf{dishonest} (1.0), \textbf{wiser} (0.29), \textbf{wight} (0.29),
-    \textbf{wellfavoured} (0.29), \textbf{recount} (0.28), \textbf{drench}
-    (0.27), \textbf{respite} (0.27), \textbf{ides} (0.26), \textbf{sentry}
-    (0.25), \textbf{cutpurse} (0.25)
+\item \textbf{prevail} (1.0), \textbf{attain} (0.29), \textbf{detain} (0.29),
+    \textbf{peruse} (0.29), \textbf{meddle} (0.28), \textbf{mix’d} (0.27),
+    \textbf{oaks} (0.26), \textbf{o’ertake} (0.26), \textbf{befall} (0.26),
+    \textbf{surrender} (0.25)
 \item \textbf{man} (1.0), \textbf{man”} (0.29), \textbf{squire} (0.26),
     \textbf{carcass} (0.26), \textbf{snail} (0.25), \textbf{pig} (0.24),
     \textbf{sincerity} (0.24), \textbf{breeder} (0.24), \textbf{ducat} (0.24),
@@ -519,10 +544,10 @@ embeddings.
     \textbf{club} (0.23), \textbf{sword} (0.23), \textbf{beaver} (0.22),
     \textbf{bounties} (0.22), \textbf{tribe} (0.21), \textbf{reference} (0.21),
     \textbf{team} (0.21)
-\item \textbf{prevail} (1.0), \textbf{attain} (0.29), \textbf{detain} (0.29),
-    \textbf{peruse} (0.29), \textbf{meddle} (0.28), \textbf{mix’d} (0.27),
-    \textbf{oaks} (0.26), \textbf{o’ertake} (0.26), \textbf{befall} (0.26),
-    \textbf{surrender} (0.25)
+\item \textbf{dishonest} (1.0), \textbf{wiser} (0.29), \textbf{wight} (0.29),
+    \textbf{wellfavoured} (0.29), \textbf{recount} (0.28), \textbf{drench}
+    (0.27), \textbf{respite} (0.27), \textbf{ides} (0.26), \textbf{sentry}
+    (0.25), \textbf{cutpurse} (0.25)
 \end{itemize}
 \end{solution}
 \end{parts}

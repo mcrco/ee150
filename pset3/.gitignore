@@ -1,0 +1,12 @@
+.venv
+data
+plots
+*.pth
+*.lock
+results
+
+__pycache__/
+*.py[cod]
+**/*.egg-info/
+*.egg-info/
+results.json
