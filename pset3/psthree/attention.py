@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import math
 
 
 class SelfAttention(nn.Module):
@@ -14,14 +15,14 @@ class SelfAttention(nn.Module):
         # Instead of using nn.Parameter, use nn.Linear (for speed)
         # Don't need any special initializaton
         self.W_q = nn.Linear(d_model, d_model)
-        self.W_k = None
-        self.W_v = None
+        self.W_k = nn.Linear(d_model, d_model)
+        self.W_v = nn.Linear(d_model, d_model)
 
         # TODO: Initialize softmax
         # In order to compute attention scores, what dimension is softmax applied to?
         # Hint: You want each row of your attention scores to be a probability distribution
         # Use nn.Softmax
-        self.softmax = nn.Softmax(dim=2)
+        self.softmax = nn.Softmax(dim=-1)
 
     # TODO: Implement forward pass
     # Follow the formula you wrote in the problem set
@@ -31,8 +32,9 @@ class SelfAttention(nn.Module):
     # Keep in mind that linear layers are only applied on the last dimension of x by default
     # Fun fact: Implementing this method is a real interview question for Machine Learning Engineering roles
     def forward(self, x):
-        output = None
-
+        Q, K, V = self.W_q(x), self.W_k(x), self.W_v(x)
+        logits = Q @ K.transpose(-1, -2) / math.sqrt(self.d_model)
+        output = self.softmax(logits) @ V
         return output
 
 
@@ -50,10 +52,10 @@ class MultiHeadAttention(nn.Module):
         # Finally, concatenating the heads together and applying the output linear layer
         # Instead of using nn.Parameter, use nn.Linear (for speed)
         # Don't need any special initializaton
-        self.W_q = None
-        self.W_k = None
-        self.W_v = None
-        self.W_o = None
+        self.W_q = nn.Linear(d_model, d_model)
+        self.W_k = nn.Linear(d_model, d_model)
+        self.W_v = nn.Linear(d_model, d_model)
+        self.W_o = nn.Linear(d_model, d_model)
 
         # TODO: Define d_k
         # d_k is only used when applying attention for each head individually
@@ -63,7 +65,7 @@ class MultiHeadAttention(nn.Module):
         # In order to compute attention scores, what dimension is softmax applied to?
         # Hint: You want each row of your attention scores to be a probability distribution
         # Use nn.Softmax
-        self.softmax = None
+        self.softmax = nn.Softmax(dim=-1)
 
     # TODO: Implement forward pass
     # Follow these steps
@@ -79,5 +81,11 @@ class MultiHeadAttention(nn.Module):
     # 6) Use torch.Tensor.reshape to effectively concatenate the heads together
     # 7) Apply the final linear transformation
     def forward(self, x):
-        output = None
+        B, T = x.shape[:-1]
+        Q = self.W_q(x).reshape(B, T, self.num_heads, self.d_k).transpose(1, 2)
+        K = self.W_k(x).reshape(B, T, self.num_heads, self.d_k).transpose(1, 2)
+        V = self.W_v(x).reshape(B, T, self.num_heads, self.d_k).transpose(1, 2)
+        logits = Q @ K.transpose(-1, -2) / math.sqrt(self.d_model)
+        attn = (self.softmax(logits) @ V).transpose(1, 2).reshape(B, T, self.d_model)
+        output = self.W_o(attn)
         return output
