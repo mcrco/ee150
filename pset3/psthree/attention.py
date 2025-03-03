@@ -2,17 +2,18 @@ import torch
 import torch.nn as nn
 import numpy as np
 
+
 class SelfAttention(nn.Module):
     def __init__(self, d_model):
         super(SelfAttention, self).__init__()
 
         # d_model = d_k = d_v
         self.d_model = d_model
-        
+
         # TODO: Initialize weights and biases
         # Instead of using nn.Parameter, use nn.Linear (for speed)
         # Don't need any special initializaton
-        self.W_q = None
+        self.W_q = nn.Linear(d_model, d_model)
         self.W_k = None
         self.W_v = None
 
@@ -20,8 +21,8 @@ class SelfAttention(nn.Module):
         # In order to compute attention scores, what dimension is softmax applied to?
         # Hint: You want each row of your attention scores to be a probability distribution
         # Use nn.Softmax
-        self.softmax = None
-        
+        self.softmax = nn.Softmax(dim=2)
+
     # TODO: Implement forward pass
     # Follow the formula you wrote in the problem set
     # Note that self-attention is applied to every input embedding in x individually
@@ -30,16 +31,16 @@ class SelfAttention(nn.Module):
     # Keep in mind that linear layers are only applied on the last dimension of x by default
     # Fun fact: Implementing this method is a real interview question for Machine Learning Engineering roles
     def forward(self, x):
-
         output = None
-        
+
         return output
-    
+
+
 class MultiHeadAttention(nn.Module):
     def __init__(self, d_model, num_heads):
         super(MultiHeadAttention, self).__init__()
         assert d_model % num_heads == 0, "d_model must be divisible by num_heads"
-        
+
         self.d_model = d_model
         self.num_heads = num_heads
 
@@ -57,13 +58,13 @@ class MultiHeadAttention(nn.Module):
         # TODO: Define d_k
         # d_k is only used when applying attention for each head individually
         self.d_k = d_model // num_heads
-        
+
         # TODO: Initialize softmax
         # In order to compute attention scores, what dimension is softmax applied to?
         # Hint: You want each row of your attention scores to be a probability distribution
         # Use nn.Softmax
         self.softmax = None
-    
+
     # TODO: Implement forward pass
     # Follow these steps
     # 1) Apply the linear transformations of q, k, v
@@ -78,6 +79,5 @@ class MultiHeadAttention(nn.Module):
     # 6) Use torch.Tensor.reshape to effectively concatenate the heads together
     # 7) Apply the final linear transformation
     def forward(self, x):
-        
         output = None
         return output

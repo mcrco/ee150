@@ -89,4 +89,3 @@ if __name__ == "__main__":
     )
 
     test_cnn(model, args.model_type, test_dataset, args.batch_size, results_path)
-

@@ -39,6 +39,7 @@ def get_vocab(text, min_word_count):
 class OneHotEncoder:
     def __init__(self, vocab):
         self.vocab = list(vocab)
+        self.vocab.sort()  # ensure consistency in vocab order
         self.oh_index = {vocab[i]: i for i in range(len(vocab))}
 
     def encode(self, word):
@@ -154,7 +155,7 @@ if __name__ == "__main__":
 
     EMBEDDING_DIM = 512
     lr = 1e-3
-    weight_decay = 1e-3
+    weight_decay = 0
 
     torch.manual_seed(42)
     cbow = CBOW(len(encoder.vocab), EMBEDDING_DIM, CONTEXT_SIZE, encoder).to(device)
@@ -200,10 +201,8 @@ if __name__ == "__main__":
         "prevail",
     ]
 
-    # cbow.load_state_dict(torch.load(weight_filename, weights_only=True))
+    cbow.load_state_dict(torch.load(weight_filename, weights_only=True))
     cbow.eval()
     for word in word_centers:
         cluster = cbow.find_similar(word, 10)
         print(cluster)
-
-    print(cbow.cosine_similarity("my", "thy"))

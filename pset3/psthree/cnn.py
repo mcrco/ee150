@@ -27,7 +27,7 @@ class CNN(nn.Module):
 
         # flatten the output
         # Use torch.flatten
-        x = x.flatten()
+        x = x.flatten(1)
 
         # pass through fully connected layer
         x = self.fc(x)
@@ -39,7 +39,7 @@ class ManualCNN(nn.Module):
     def __init__(self, num_classes=10, input_size=28):
         super(ManualCNN, self).__init__()
         # TODO: Initialize layers same as before
-        self.conv = Conv2d(1, 4, 3, 1, 1)
+        self.conv = nn.Conv2d(1, 4, 3, 1, 1)
         self.fc = nn.Linear(4 * input_size * input_size, num_classes)
 
         # Set filters manually
@@ -48,33 +48,33 @@ class ManualCNN(nn.Module):
                 # Filter 1
                 [
                     [
-                        [0, 0, 0],
-                        [0, 0, 0],
-                        [0, 0, 0],
+                        [1, 0, -1],
+                        [2, 0, -2],
+                        [1, 0, -1],
                     ]
                 ],
                 # Filter 2
                 [
                     [
+                        [1, 2, 1],
                         [0, 0, 0],
-                        [0, 0, 0],
-                        [0, 0, 0],
+                        [-1, -2, -1],
                     ]
                 ],
                 # Filter 3
                 [
                     [
-                        [0, 0, 0],
-                        [0, 0, 0],
-                        [0, 0, 0],
+                        [0, -1, 0],
+                        [-1, 2, -1],
+                        [0, -1, 0],
                     ]
                 ],
                 # Filter 4
                 [
                     [
-                        [0, 0, 0],
-                        [0, 0, 0],
-                        [0, 0, 0],
+                        [0, 1, 0],
+                        [1, -2, 1],
+                        [0, 1, 0],
                     ]
                 ],
             ],
@@ -96,7 +96,7 @@ class ManualCNN(nn.Module):
 
         # flatten the output
         # Use torch.flatten
-        x = x.flatten()
+        x = x.flatten(1)
 
         # pass through fully connected layer
         x = self.fc(x)
